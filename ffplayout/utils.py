@@ -669,6 +669,7 @@ def get_date(seek_day):
     else:
         if _playlist.start == 0 and \
                 4 > 86400.0 - get_time('full_sec') > 0:
+            # hack: when start time is 00:00:00
             return (d + timedelta(1)).strftime('%Y-%m-%d')
 
         return d.strftime('%Y-%m-%d')
