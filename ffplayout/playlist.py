@@ -469,4 +469,5 @@ class GetSourceFromPlaylist:
                 self.eof_handling(begin)
 
             if self.node:
-                yield self.node
+                yield {'now': self.node, 'previous': self.prev_node,
+                       'next': self.next_node}
