@@ -27,7 +27,7 @@ from ..folder import GetSourceFromFolder, MediaStore, MediaWatcher
 from ..playlist import GetSourceFromPlaylist
 from ..utils import (ff_proc, ffmpeg_stderr_reader, log, lower_third,
                      messenger, playlist, pre, pre_audio_codec, stdin_args,
-                     terminate_processes)
+                     terminate_processes, playing)
 
 COPY_BUFSIZE = 1024 * 1024 if system() == 'Windows' else 65424
 
@@ -83,17 +83,21 @@ def output():
 
         try:
             for node in get_source.next():
+                playing.now = node['now']
+                playing.previous = node['previous']
+                playing.next = node['next']
                 if watcher is not None:
-                    watcher.current_clip = node.get('source')
+                    watcher.current_clip = node['now'].get('source')
 
                 messenger.info(
-                    f'Play for {node["out"] - node["seek"]:.2f} '
-                    f'seconds: {node.get("source")}')
+                    f'Play for {node["now"]["out"] - node["now"]["seek"]:.2f} '
+                    f'seconds: {node["now"].get("source")}')
 
                 dec_cmd = [
                     'ffmpeg', '-v', f'level+{log.ff_level.lower()}',
                     '-hide_banner', '-nostats'
-                    ] + node['src_cmd'] + node['filter'] + ff_pre_settings
+                    ] + node['now']['src_cmd'] + node['now']['filter'] \
+                      + ff_pre_settings
 
                 messenger.debug(f'Decoder CMD: "{" ".join(dec_cmd)}"')
 
