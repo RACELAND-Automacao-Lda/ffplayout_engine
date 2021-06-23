@@ -175,8 +175,8 @@ class GetSourceFromFolder:
         self.probe = MediaProbe()
         self.next_probe = MediaProbe()
         self.node = None
-        self.node_last = None
-        self.node_next = None
+        self.prev_node = None
+        self.next_node = None
 
     def next(self):
         """
@@ -184,8 +184,8 @@ class GetSourceFromFolder:
         """
         while True:
             while self.index < len(self._media.store):
-                if self.node_next:
-                    self.node = deepcopy(self.node_next)
+                if self.next_node:
+                    self.node = deepcopy(self.next_node)
                     self.probe = deepcopy(self.next_probe)
                 else:
                     self.probe.load(self._media.store[self.index])
@@ -201,7 +201,7 @@ class GetSourceFromFolder:
                 if self.index < len(self._media.store) - 1:
                     self.next_probe.load(self._media.store[self.index + 1])
                     next_duration = float(self.next_probe.format['duration'])
-                    self.node_next = {
+                    self.next_node = {
                         'in': 0,
                         'seek': 0,
                         'out': next_duration,
@@ -211,14 +211,15 @@ class GetSourceFromFolder:
                     }
                 else:
                     self._media.rand()
-                    self.node_next = None
+                    self.next_node = None
 
                 self.node['src_cmd'] = ['-i', self._media.store[self.index]]
                 self.node['filter'] = build_filtergraph(
-                    self.node, self.node_last, self.node_next)
+                    self.node, self.prev_node, self.next_node)
 
-                yield self.node
+                yield {'now': self.node, 'previous': self.prev_node,
+                       'next': self.next_node}
                 self.index += 1
-                self.node_last = deepcopy(self.node)
+                self.prev_node = deepcopy(self.node)
 
             self.index = 0
