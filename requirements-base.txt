@@ -3,3 +3,5 @@ pyyaml
 requests
 supervisor
 watchdog
+werkzeug
+json-rpc

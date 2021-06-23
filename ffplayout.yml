@@ -30,6 +30,13 @@ logging:
     log_level: "DEBUG"
     ffmpeg_level: "ERROR"
 
+rpc:
+    helptext: Run JSON RPC server. This server runs without any authentication, and
+        for that it should not be exposed to the world.
+    run: False
+    address: localhost
+    port: 5000
+
 processing:
     helptext: Default processing, for all clips that they get prepared in that way,
         so the output is unique. 'aspect' must be a float number. 'logo' is only used

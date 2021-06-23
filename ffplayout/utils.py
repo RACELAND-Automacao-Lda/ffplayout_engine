@@ -133,6 +133,7 @@ def get_time(time_format):
 sync_op = SimpleNamespace(time_delta=0, realtime=False)
 mail = SimpleNamespace()
 log = SimpleNamespace()
+rpc = SimpleNamespace()
 pre = SimpleNamespace()
 playlist = SimpleNamespace()
 storage = SimpleNamespace()
@@ -140,6 +141,7 @@ lower_third = SimpleNamespace()
 playout = SimpleNamespace()
 
 ff_proc = SimpleNamespace(decoder=None, encoder=None)
+playing = SimpleNamespace(now=None, previous=None, next=None)
 
 
 def str_to_sec(time_str):
@@ -234,16 +236,15 @@ if stdin_args.length:
 else:
     _p_length = str_to_sec(_cfg['playlist']['length'])
 
-playlist.mode = _cfg['playlist']['playlist_mode']
-playlist.path = _cfg['playlist']['path']
-playlist.start = _p_start
-playlist.length = _p_length
-
 log.to_file = _cfg['logging']['log_to_file']
 log.backup_count = _cfg['logging']['backup_count']
 log.path = Path(_cfg['logging']['log_path'])
 log.level = _cfg['logging']['log_level']
 log.ff_level = _cfg['logging']['ffmpeg_level']
+
+rpc.run = _cfg['rpc']['run']
+rpc.addr = _cfg['rpc']['address']
+rpc.port = _cfg['rpc']['port']
 
 pre.w = _cfg['processing']['width']
 pre.h = _cfg['processing']['height']
@@ -251,6 +252,11 @@ pre.aspect = _cfg['processing']['aspect']
 pre.fps = _cfg['processing']['fps']
 pre.v_bitrate = _cfg['processing']['width'] * _cfg['processing']['height'] / 10
 pre.v_bufsize = pre.v_bitrate / 2
+
+playlist.mode = _cfg['playlist']['playlist_mode']
+playlist.path = _cfg['playlist']['path']
+playlist.start = _p_start
+playlist.length = _p_length
 
 playout.mode = _cfg['out']['mode']
 playout.name = _cfg['out']['service_name']
@@ -279,15 +285,15 @@ class CustomFormatter(logging.Formatter):
     cyan = '\x1b[36;1m'
     reset = '\x1b[0m'
 
-    timestamp = darkgrey + '[%(asctime)s]' + reset
+    timestamp = darkgrey + '[%(asctime)s]'
     level = '[%(levelname)s]' + reset
     message = grey + '  %(message)s' + reset
 
     FORMATS = {
-        logging.DEBUG: timestamp + blue + level + '  ' + message + reset,
-        logging.INFO: timestamp + green + level + '   ' + message + reset,
-        logging.WARNING: timestamp + yellow + level + message + reset,
-        logging.ERROR: timestamp + red + level + '  ' + message + reset
+        logging.DEBUG: timestamp + blue + level + '  ' + message,
+        logging.INFO: timestamp + green + level + '   ' + message,
+        logging.WARNING: timestamp + yellow + level + message,
+        logging.ERROR: timestamp + red + level + '  ' + message
     }
 
     def format_message(self, msg):
@@ -315,6 +321,8 @@ class CustomFormatter(logging.Formatter):
         override logging format
         """
         record.msg = self.format_message(record.getMessage())
+        record.args = ()
+
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
@@ -646,6 +654,13 @@ class MediaProbe:
                 stream['fps'] = float(rate) / float(factor)
 
                 self.video.append(stream)
+
+    def to_json(self):
+        raw_dict = json.loads(json.dumps(self, default=lambda o: o.__dict__))
+        del raw_dict['remote_source']
+        del raw_dict['src']
+        del raw_dict['is_remote']
+        return raw_dict
 
 
 # ------------------------------------------------------------------------------

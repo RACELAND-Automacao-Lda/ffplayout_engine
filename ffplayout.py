@@ -25,7 +25,8 @@ from importlib import import_module
 from pathlib import Path
 from platform import system
 
-from ffplayout.utils import playout, stdin_args, validate_ffmpeg_libs
+from ffplayout.rpc_server import run_rpc_server
+from ffplayout.utils import playout, stdin_args, validate_ffmpeg_libs, rpc
 
 try:
     if system() == 'Windows':
@@ -43,6 +44,10 @@ def main():
     """
     play out depending on output mode
     """
+
+    # run rpc server if is active
+    if rpc.run:
+        run_rpc_server()
 
     if stdin_args.mode:
         output = import_module(f'ffplayout.output.{stdin_args.mode}').output
