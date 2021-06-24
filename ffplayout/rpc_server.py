@@ -1,6 +1,4 @@
 import logging
-import json
-from enum import Enum
 from logging.handlers import TimedRotatingFileHandler
 from threading import Thread
 
@@ -32,10 +30,11 @@ else:
 def now_broadcasting(**kwargs):
     playing.now['probe'] = playing.now['probe'].to_json()
 
-    if playing.previous.get('probe'):
+    if playing.previous and playing.previous.get('probe') \
+            and type(playing.previous['probe']) != dict:
         playing.previous['probe'] = playing.previous['probe'].to_json()
 
-    if playing.next.get('probe'):
+    if playing.next and playing.next.get('probe'):
         playing.next['probe'] = playing.next['probe'].to_json()
 
     return {
