@@ -28,7 +28,7 @@ from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 
 from .filters.default import build_filtergraph
-from .utils import MediaProbe, ff_proc, messenger, stdin_args, storage
+from .utils import MediaProbe, ff_proc, messenger, playing, stdin_args, storage
 
 # ------------------------------------------------------------------------------
 # folder watcher
@@ -217,9 +217,13 @@ class GetSourceFromFolder:
                 self.node['filter'] = build_filtergraph(
                     self.node, self.prev_node, self.next_node)
 
-                yield {'now': self.node, 'previous': self.prev_node,
-                       'next': self.next_node}
+                playing.now = deepcopy(self.node)
+                playing.previous = deepcopy(self.prev_node)
+                playing.next = deepcopy(self.next_node)
+
+                yield self.node
                 self.index += 1
-                self.prev_node = deepcopy(self.node)
+
+                self.prev_node = playing.now
 
             self.index = 0
