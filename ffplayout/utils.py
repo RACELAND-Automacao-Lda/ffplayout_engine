@@ -867,7 +867,7 @@ def gen_dummy(duration):
     """
     color = '#121212'
     duration = round(duration, 3)
-    vol = stdin_args.volume if stdin_args.volume else 0.05
+    vol = get_float(stdin_args.volume, 0.05)
     # IDEA: add noise could be an config option
     # noise = 'noise=alls=50:allf=t+u,hue=s=0'
     return [
