@@ -867,13 +867,14 @@ def gen_dummy(duration):
     """
     color = '#121212'
     duration = round(duration, 3)
+    vol = stdin_args.volume if stdin_args.volume else 0.05
     # IDEA: add noise could be an config option
     # noise = 'noise=alls=50:allf=t+u,hue=s=0'
     return [
         '-f', 'lavfi', '-i',
         f'color=c={color}:s={pre.w}x{pre.h}:d={duration}:r={pre.fps},'
         'format=pix_fmts=yuv420p',
-        '-f', 'lavfi', '-i', f'anoisesrc=d={duration}:c=pink:r=48000:a=0.05'
+        '-f', 'lavfi', '-i', f'anoisesrc=d={duration}:c=pink:r=48000:a={vol}'
     ]
 
 
@@ -923,12 +924,13 @@ def src_or_dummy(node):
     when path not exist, generate dummy clip
     """
 
-    probe = MediaProbe()
-    probe.load(node.get('source'))
-    node['probe'] = probe
+    if not node.get('probe'):
+        probe = MediaProbe()
+        probe.load(node.get('source'))
+        node['probe'] = probe
 
     # check if input is a remote source
-    if probe.is_remote and probe.video[0]:
+    if node['probe'].is_remote and node['probe'].video[0]:
         if node['seek'] > 0.0:
             messenger.warning(
                 f'Seek in remote source "{node.get("source")}" not supported!')
