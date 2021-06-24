@@ -32,8 +32,8 @@ import requests
 
 from .filters.default import build_filtergraph
 from .utils import (MediaProbe, check_sync, get_date, get_delta, get_float,
-                    get_time, messenger, playlist, src_or_dummy, stdin_args,
-                    storage, sync_op, valid_json)
+                    get_time, messenger, playing, playlist, src_or_dummy,
+                    stdin_args, storage, sync_op, valid_json)
 
 
 def handle_list_init(node):
@@ -350,10 +350,14 @@ class GetSourceFromPlaylist:
         """
         set previous and next clip node
         """
-        self.prev_node = self.clip_nodes[index - 1] if index > 0 else None
+        if index == 1:
+            self.prev_node = self.clip_nodes[0]
 
         if index < self.node_count - 1:
+            probe = MediaProbe()
             self.next_node = self.clip_nodes[index + 1]
+            probe.load(self.next_node.get('source'))
+            self.next_node['probe'] = probe
         else:
             self.next_node = None
 
@@ -469,5 +473,10 @@ class GetSourceFromPlaylist:
                 self.eof_handling(begin)
 
             if self.node:
-                yield {'now': self.node, 'previous': self.prev_node,
-                       'next': self.next_node}
+                playing.now = deepcopy(self.node)
+                playing.previous = deepcopy(self.prev_node)
+                playing.next = deepcopy(self.next_node)
+
+                yield self.node
+
+                self.prev_node = playing.now
